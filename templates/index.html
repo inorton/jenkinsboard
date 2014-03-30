@@ -1,0 +1,10 @@
+$def with (err)
+
+$var title="Builds"
+
+<h1>Jenkins Build States</h1>
+
+$if err:
+  $ s = err
+  <div class="alert" style="white-space:pre">$s</div>
+
