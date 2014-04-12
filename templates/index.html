@@ -2,9 +2,129 @@ $def with (err)
 
 $var title="Builds"
 
-<h1>Jenkins Build States</h1>
+<div>Jenkins Build States</div>
 
 $if err:
   $ s = err
   <div class="alert" style="white-space:pre">$s</div>
+
+<div class="container-fluid" id="jobs" style="color:white">
+</div>
+
+
+<script type="text/javascript">
+
+function make_id( prefix, parts ){
+  var id = prefix + "_";
+  for ( part in parts ) {
+    pname = parts[part];
+    pname = pname.replace("=","_");
+    pname = pname.replace(".","-");
+    id = id + "_" + encodeURIComponent( pname );
+  }
+  return id;
+}
+
+var jobrows = [];
+
+var busy = false;
+
+var jobs = $$.getJSON( "/selected/board1", function (data) {
+    var paths = new Array();
+    for (var job in data)
+    {
+      var item = data[job];
+      if (item.configs.length > 0 ){
+        // is a multi-configuration job
+        var cfgitems = new Array();
+        for (var cfg in item.configs) {
+
+          var cfgdata = new Array();
+          var cfgvalues=item.configs[cfg].split("=");
+          var cfgname=cfgvalues[1];
+          cfgdata["id"] = make_id( "build_", [ item.name, cfg ] );
+          cfgdata["title"] = cfgname;
+          cfgdata["doneid"] = make_id( "done_", [item.name, item.configs[cfg]]);
+          cfgdata["leftid"] = make_id( "left_", [item.name, item.configs[cfg]]);
+          update_build(item.path);
+          cfgitems.push(cfgdata);
+          paths.push(item.path);
+        }
+
+        var xcfg = $$().handlebars($$("#build_item_template"), {
+          title: item.name,
+          configs: cfgitems });
+        $$("#jobs").append(xcfg); 
+
+      } else {
+        // is a simple job
+
+      }
+
+    } 
+
+    setInterval( function(){  
+      if ( !busy ) {
+        busy = true;
+        for ( var x in paths ) {
+          console.log( paths[x] );
+          update_build( paths[x] );
+        } 
+      }
+      busy = false;
+    }, 4000 );
+  } );
+
+  function update_build( itempath ) {
+    $$.getJSON("/status/" + itempath, function (state) {
+      var jname = state.name;
+
+      for ( var cfg in state.state ) {
+        var config = state.state[cfg];
+
+        var block = $$( "#" + make_id( "build_", [state.name, cfg]));
+        var pr_done = $$( "#" + make_id( "done_", [state.name, cfg]));
+        
+
+        var completed = 100;
+        if ( config.result == "SUCCESS" ) {
+          pr_done.removeClass("active");
+          pr_done.removeClass("progress-striped");
+          pr_done.addClass("progress-bar-success");
+          pr_done.removeClass("progress-bar-danger");
+
+        } else {
+          if ( config.building ) {
+            pr_done.addClass("progress-bar-success");
+            pr_done.removeClass("progress-bar-danger");
+
+
+            pr_done.parent().addClass("active");
+            pr_done.parent().addClass("progress-striped");
+            if ( config.estimatedDuration > 0 ) 
+            {
+              var timestamp = new Date().getTime();
+              var duration = timestamp - config.timestamp;
+              var frac = duration / config.estimatedDuration;
+              completed = 100 * frac;
+            }
+          } else {
+            pr_done.addClass("progress-bar-danger");
+            pr_done.removeClass("progress-bar-success");
+
+          }
+        }
+
+        pr_done.width( completed + "%" );
+
+
+      }
+
+//      $$("#build_" + state.name );
+       
+    });
+  }
+
+</script>
+
 

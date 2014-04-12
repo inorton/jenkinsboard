@@ -1,11 +1,10 @@
+"""
+jenkins visualisation board - inb@ncipher.com 2014
+"""
 #!/usr/bin/env python
 
-import os
-import time
 import web
 import json
-import subprocess
-import shutil
 
 import jenkins
 
@@ -19,10 +18,10 @@ app = web.auto_application()
 render = web.template.render("templates/", base="master", globals = globals)
 
 class index(app.page):
-  path = '/'
+    path = '/'
 
-  def GET(self):
-    return render.index(None)
+    def GET(self):
+        return render.index(None)
 
 class selected(app.page):
     path = "/selected/(.+)"
@@ -36,7 +35,6 @@ class selected(app.page):
                 continue
             if not job.name():
                 continue
-            print str(job.path) + " " + job.name()
             params = jl.get_properties( job.path, ["actions[parameterDefinitions[*]]"] )
 
             if "actions" in params:
@@ -46,12 +44,12 @@ class selected(app.page):
                         for param in plist:
                             if "name" in param:
                                 if param["name"] == "jenkinsboard":
-                                    print str(param)
                                     if param["description"] == boardname:
                                         rv.append( { 
                                             "name" : job.name(),
                                             "configs" : job.configurations(),
                                             "path" : job.path,
+                                            "link" : server + "/" + job.path,
                                         })
 
 
@@ -69,7 +67,8 @@ class jobs(app.page):
             rv.append( { 
                 "name" : job.name(),
                 "path" : job.path,
-                "configs" : job.configurations()
+                "configs" : job.configurations(),
+                "link" : server + "/" + job.path,
                 })
 
         return json.dumps(rv)
@@ -91,13 +90,18 @@ class status(app.page):
         job = jl.get_item( jobpath )
         rv = dict()
         for cfg in job.configurations():
-            state = jl.get_properties( "%s/%s/lastBuild" % (job.parent, cfg),
-                          ["estimatedDuration", "duration", "result", "building"] )
+            state = jl.get_properties( "%s/%s/lastBuild" % (job.path, cfg),
+                          ["estimatedDuration", "duration", "result",
+                              "building", "timestamp"] )
             rv[cfg] = state
 
-
         web.header("Content-Type", "application/json")
-        return json.dumps(rv)
+        meta = dict()
+        meta["name"] = job.name();
+        meta["path"] = job.path;
+        meta["state"] = rv;
+        print str(meta)
+        return json.dumps(meta)
 
 
 
