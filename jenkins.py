@@ -5,6 +5,7 @@ class JenkinsItem:
     def __init__(self, jobpath, data):
         self.data = data
         self.path = jobpath
+        self.link = None
 
     def __str__(self):
         return "%s : %s" % ( self.path, self.name() )
@@ -65,6 +66,7 @@ class JenkinsAPI:
         job = json.loads(s)
 
         item = JenkinsItem(address, job)
+        item.url = "%s/%s" % ( self.server, address )
 
         return item
 

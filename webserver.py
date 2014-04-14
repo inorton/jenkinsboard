@@ -78,7 +78,8 @@ class job(app.page):
 
     def GET(self, jobpath):
         jl = jenkins.JenkinsAPI( server )
-        job = jl.get_item( jobpath );
+        job = jl.get_item( jobpath )
+        job.url = "%s/%s" % ( server, jobpath )
         web.header("Content-Type", "application/json")
         return json.dumps(job.data)
 
@@ -97,9 +98,9 @@ class status(app.page):
 
         web.header("Content-Type", "application/json")
         meta = dict()
-        meta["name"] = job.name();
-        meta["path"] = job.path;
-        meta["state"] = rv;
+        meta["name"] = job.name()
+        meta["path"] = job.path
+        meta["state"] = rv
         print str(meta)
         return json.dumps(meta)
 

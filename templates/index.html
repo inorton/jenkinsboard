@@ -52,15 +52,16 @@ function add_build_item( paths, item ) {
     cfgdata["id"] = make_id( "build_", [ item.name, cfg ] );
     cfgdata["title"] = cfgname;
     cfgdata["colsize"] = colsize;
+    cfgdata["link"] = item.link + "/" + item.configs[cfg];
     cfgdata["doneid"] = make_id( "done_", [item.name, item.configs[cfg]]);
     cfgdata["leftid"] = make_id( "left_", [item.name, item.configs[cfg]]);
-    update_build(item.path);
     cfgitems.push(cfgdata);
     paths.push(item.path);
   }
 
   var xcfg = $$().handlebars($$("#build_item_template"), {
     title: item.name,
+    link: item.link,
     configs: cfgitems });
   return xcfg;
 
@@ -82,6 +83,7 @@ var jobs = $$.getJSON( "/selected/board1", function (data) {
         var row = make_div("row");
         row.append(xcfg);
         $$("#jobs").append(row); 
+        update_build(item.path);
       } 
 
     }
@@ -102,6 +104,7 @@ var jobs = $$.getJSON( "/selected/board1", function (data) {
         var x = add_build_item( paths, item );
         x.addClass("col-md-4");
         row.append(x);
+        update_build(item.path);
         singles++;
       }
 
