@@ -14,6 +14,12 @@ $if err:
 
 <script type="text/javascript">
 
+function make_div( setclass ) {
+  var rv = $$("<div/>");
+  rv.addClass(setclass);
+  return rv; 
+}
+
 function make_id( prefix, parts ){
   var id = prefix + "_";
   for ( part in parts ) {
@@ -25,6 +31,41 @@ function make_id( prefix, parts ){
   return id;
 }
 
+function add_build_item( paths, item ) {
+  var cfgitems = new Array();
+  for (var cfg in item.configs) {
+
+    var cfgdata = new Array();
+    var cfgvalues=item.configs[cfg].split("=");
+    var cfgname=cfgvalues[1];
+    var colsize = 6;
+    if ( item.configs.length % 2 ) {
+      colsize = 4;
+    }
+
+    
+    if ( !item.configs || item.configs.length == 1 ) {
+      cfgname = false;
+      colsize = false;
+    }
+
+    cfgdata["id"] = make_id( "build_", [ item.name, cfg ] );
+    cfgdata["title"] = cfgname;
+    cfgdata["colsize"] = colsize;
+    cfgdata["doneid"] = make_id( "done_", [item.name, item.configs[cfg]]);
+    cfgdata["leftid"] = make_id( "left_", [item.name, item.configs[cfg]]);
+    update_build(item.path);
+    cfgitems.push(cfgdata);
+    paths.push(item.path);
+  }
+
+  var xcfg = $$().handlebars($$("#build_item_template"), {
+    title: item.name,
+    configs: cfgitems });
+  return xcfg;
+
+}
+
 var jobrows = [];
 
 var busy = false;
@@ -34,34 +75,38 @@ var jobs = $$.getJSON( "/selected/board1", function (data) {
     for (var job in data)
     {
       var item = data[job];
-      if (item.configs.length > 0 ){
+      // two or more items
+      if (item.configs.length > 1 ){
         // is a multi-configuration job
-        var cfgitems = new Array();
-        for (var cfg in item.configs) {
+        var xcfg = add_build_item( paths, item );
+        var row = make_div("row");
+        row.append(xcfg);
+        $$("#jobs").append(row); 
+      } 
 
-          var cfgdata = new Array();
-          var cfgvalues=item.configs[cfg].split("=");
-          var cfgname=cfgvalues[1];
-          cfgdata["id"] = make_id( "build_", [ item.name, cfg ] );
-          cfgdata["title"] = cfgname;
-          cfgdata["doneid"] = make_id( "done_", [item.name, item.configs[cfg]]);
-          cfgdata["leftid"] = make_id( "left_", [item.name, item.configs[cfg]]);
-          update_build(item.path);
-          cfgitems.push(cfgdata);
-          paths.push(item.path);
-        }
+    }
 
-        var xcfg = $$().handlebars($$("#build_item_template"), {
-          title: item.name,
-          configs: cfgitems });
-        $$("#jobs").append(xcfg); 
-
-      } else {
-        // is a simple job
-
+    // single items
+    var singles = 0;
+    var row = make_div("row");
+    for (var job in data)
+    { 
+      if ( singles > 3 ) {
+        $$("#jobs").append(row);
+        row = make_div("row");
+        singles = 0;
+      }
+      var item = data[job];
+      
+      if ( item.configs.length == 1 ) {
+        var x = add_build_item( paths, item );
+        x.addClass("col-md-4");
+        row.append(x);
+        singles++;
       }
 
-    } 
+    }
+    $$("#jobs").append(row);
 
     setInterval( function(){  
       if ( !busy ) {
@@ -75,6 +120,41 @@ var jobs = $$.getJSON( "/selected/board1", function (data) {
     }, 4000 );
   } );
 
+  function progress_active( pbar ) {
+    pbar.removeClass("progress-bar-danger");
+    pbar.addClass("progress-bar-success");
+    pbar.parent().addClass("active");
+    pbar.parent().addClass("progress-striped");
+  }
+
+  function progress_done( pbar ) 
+  {  
+    pbar.parent().removeClass("active");
+    pbar.parent().removeClass("progress-striped");
+  }
+
+  function progress_done_success( pbar ) {
+    progress_done( pbar );
+    pbar.addClass("progress-bar-success");
+    pbar.removeClass("progress-bar-danger");
+    pbar.removeClass("progress-bar-warning");
+  }
+
+  function progress_done_danger( pbar ) {
+    progress_done( pbar );
+    pbar.removeClass("progress-bar-success");
+    pbar.addClass("progress-bar-danger");
+    pbar.removeClass("progress-bar-warning");
+
+  }
+
+  function progress_done_warning( pbar ) {
+    progress_done( pbar );
+    pbar.removeClass("progress-bar-success");
+    pbar.removeClass("progress-bar-danger");
+    pbar.addClass("progress-bar-warning");
+  }
+
   function update_build( itempath ) {
     $$.getJSON("/status/" + itempath, function (state) {
       var jname = state.name;
@@ -84,23 +164,19 @@ var jobs = $$.getJSON( "/selected/board1", function (data) {
 
         var block = $$( "#" + make_id( "build_", [state.name, cfg]));
         var pr_done = $$( "#" + make_id( "done_", [state.name, cfg]));
+        var pr_left = $$( "#" + make_id( "left_", [state.name, cfg]));
         
 
         var completed = 100;
         if ( config.result == "SUCCESS" ) {
-          pr_done.removeClass("active");
-          pr_done.removeClass("progress-striped");
-          pr_done.addClass("progress-bar-success");
-          pr_done.removeClass("progress-bar-danger");
+          progress_done_success( pr_done );
 
         } else {
+
+          progress_done_warning( pr_left );
           if ( config.building ) {
-            pr_done.addClass("progress-bar-success");
-            pr_done.removeClass("progress-bar-danger");
+            progress_active( pr_done );
 
-
-            pr_done.parent().addClass("active");
-            pr_done.parent().addClass("progress-striped");
             if ( config.estimatedDuration > 0 ) 
             {
               var timestamp = new Date().getTime();
@@ -109,13 +185,13 @@ var jobs = $$.getJSON( "/selected/board1", function (data) {
               completed = 100 * frac;
             }
           } else {
-            pr_done.addClass("progress-bar-danger");
-            pr_done.removeClass("progress-bar-success");
-
+            progress_done_danger( pr_done );
           }
         }
 
         pr_done.width( completed + "%" );
+        pr_left.width( (100 - completed) + "%" );
+
 
 
       }

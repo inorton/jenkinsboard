@@ -24,10 +24,15 @@ $def with (content)
     <div class="build_configs container-fluid">
       <div class="row">
       {{#each configs}}
-      <div class="col-md-6">
+      {{#if colsize}}
+      <div class="col-md-{{colsize}}">
+      {{/if}}
+      {{#if title}}
       <div class="config_title">{{title}}</div>
+      {{/if}}
       <div class='progress'>
         <div id='{{doneid}}' class='progress-bar'>{{blame}}</div>
+        <div id='{{leftid}}' class='progress-bar'></div>
       </div>
       </div>
       {{/each}}
