@@ -131,7 +131,8 @@ var jobs = $$.getJSON( "/selected/board1", function (data) {
   }
 
   function progress_done( pbar ) 
-  {  
+  { 
+    pbar.removeClass("progress-bar-info");
     pbar.parent().removeClass("active");
     pbar.parent().removeClass("progress-striped");
   }
