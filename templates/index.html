@@ -58,9 +58,9 @@ function add_build_item( paths, item ) {
     cfgitems.push(cfgdata);
     paths.push(item.path);
   }
-
+  var displayname = item.name.replace("Mainline","")
   var xcfg = $$().handlebars($$("#build_item_template"), {
-    title: item.name,
+    title: displayname,
     link: item.link,
     configs: cfgitems });
   return xcfg;
