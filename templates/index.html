@@ -120,7 +120,7 @@ var jobs = $$.getJSON( "/selected/board1", function (data) {
         } 
       }
       busy = false;
-    }, 4000 );
+    }, 8000 );
   } );
 
   function progress_active( pbar ) {
@@ -159,10 +159,18 @@ var jobs = $$.getJSON( "/selected/board1", function (data) {
     pbar.addClass("progress-bar-warning");
   }
 
-  function update_build( itempath ) {
-    $$.getJSON("/status/" + itempath, function (state) {
-      var jname = state.name;
+  var build_update_count = 0;
 
+  function update_build( itempath ) {
+    if ( build_update_count > 3 ) {
+      // too many requests, wait a bit
+      setTimeout( function() { update_build(itempath); }, 1000 );
+      return; 
+    }
+    build_update_count++;
+    $$.getJSON("/status/" + itempath, function (state) {
+      build_update_count--;
+      var jname = state.name;
       for ( var cfg in state.state ) {
         var config = state.state[cfg];
 
@@ -202,7 +210,7 @@ var jobs = $$.getJSON( "/selected/board1", function (data) {
 
 //      $$("#build_" + state.name );
        
-    });
+    }, function (x) { build_update_count--; });
   }
 
 </script>
