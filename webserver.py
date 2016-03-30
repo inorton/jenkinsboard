@@ -1,41 +1,61 @@
 """
-jenkins visualisation board - inb@ncipher.com 2014
+jenkins visualisation board - inb@ncipher.com 2016
 """
 #!/usr/bin/env python
 
 import web
 import json
-
 import jenkins
+import os
 
-server = "http://triffid.ncipher.com:8080"
+THISDIR = os.path.dirname(os.path.abspath(__file__))
+SETTINGS_JSON = os.path.join(THISDIR, "settings.json")
+SETTINGS = json.load(open(SETTINGS_JSON, "rb"))
 
-from web import form
-
-globals = { }
+GLOBALS = {}
 
 app = web.auto_application()
-render = web.template.render("templates/", base="master", globals = globals)
+render = web.template.render("templates/", base="master", globals=GLOBALS)
+
 
 class index(app.page):
+    """
+    Main page.
+    """
     path = '/'
 
     def GET(self):
-        return render.index(None)
+        """
+        Render
+        :return:
+        """
+        boardname = SETTINGS["board"]
+        return render.index(None, boardname)
+
 
 class selected(app.page):
+    """
+    List the selected jobs
+    """
     path = "/selected/(.+)"
-    def GET(self,boardname):
-        jl = jenkins.JenkinsAPI( server )
-        jobs = jl.get_all_jobs()
+
+    def GET(self, boardname):
+        """
+        Render
+        :param boardname:
+        :return:
+        """
+        jl = jenkins.JenkinsAPI(SETTINGS["master"])
+        joblist = jl.get_all_jobs()
         web.header("Content-Type", "application/json")
         rv = []
-        for job in jobs:
-            if not job:
+        for jobitem in joblist:
+            if not jobitem:
                 continue
-            if not job.name():
+            if not jobitem.name():
                 continue
-            params = jl.get_properties( job.path, ["actions[parameterDefinitions[*]]"] )
+            params = jl.get_properties(jobitem.path,
+                                       ["actions[parameterDefinitions[*]]"])
 
             if "actions" in params:
                 for pd in params["actions"]:
@@ -44,67 +64,91 @@ class selected(app.page):
                         for param in plist:
                             if "name" in param:
                                 if param["name"] == "jenkinsboard":
-                                    if param["description"] == boardname:
-                                        rv.append( { 
-                                            "name" : job.name(),
-                                            "configs" : job.configurations(),
-                                            "path" : job.path,
-                                            "link" : server + "/" + job.path,
+                                    boards = param["description"].split(",")
+                                    if boardname in boards:
+                                        rv.append({
+                                            "name": jobitem.name(),
+                                            "configs": jobitem.configurations(),
+                                            "path": jobitem.path,
+                                            "link": SETTINGS["master"] + "/" + jobitem.path,
                                         })
-
-
         return json.dumps(rv)
 
 
 class jobs(app.page):
+    """
+    All jobs
+    """
     path = "/jobs/"
+
     def GET(self):
-        jl = jenkins.JenkinsAPI( server )
-        jobs = jl.get_all_jobs()
+        """
+        Render
+        :return:
+        """
+        jl = jenkins.JenkinsAPI( SETTINGS["master"] )
+        joblist = jl.get_all_jobs()
         web.header("Content-Type", "application/json")
         rv = []
-        for job in jobs:
-            rv.append( { 
-                "name" : job.name(),
-                "path" : job.path,
-                "configs" : job.configurations(),
-                "link" : server + "/" + job.path,
+        for jobitem in joblist:
+            rv.append({
+                "name": jobitem.name(),
+                "path": jobitem.path,
+                "configs": jobitem.configurations(),
+                "link": SETTINGS["master"] + "/" + jobitem.path,
                 })
 
         return json.dumps(rv)
 
+
 class job(app.page):
+    """
+    Individual build
+    """
     path = "/job/(.+)"
 
     def GET(self, jobpath):
-        jl = jenkins.JenkinsAPI( server )
-        job = jl.get_item( jobpath )
-        job.url = "%s/%s" % ( server, jobpath )
+        """
+        Render
+        :param jobpath:
+        :return:
+        """
+        jl = jenkins.JenkinsAPI(SETTINGS["master"])
+        jobitem = jl.get_item(jobpath)
+        jobitem.url = "%s/%s" % (SETTINGS["master"], jobpath)
         web.header("Content-Type", "application/json")
-        return json.dumps(job.data)
+        return json.dumps(jobitem.data)
+
 
 class status(app.page):
+    """
+    Status page
+    """
     path = "/status/(.+)"
 
     def GET(self, jobpath):
-        jl = jenkins.JenkinsAPI( server )
-        job = jl.get_item( jobpath )
+        """
+        Render
+        :param jobpath:
+        :return:
+        """
+        jl = jenkins.JenkinsAPI(SETTINGS["master"])
+        jobitem = jl.get_item(jobpath)
         rv = dict()
-        for cfg in job.configurations():
-            state = jl.get_properties( "%s/%s/lastBuild" % (job.path, cfg),
-                          ["estimatedDuration", "duration", "result",
-                              "building", "timestamp"] )
+        for cfg in jobitem.configurations():
+            state = jl.get_properties(
+                "%s/%s/lastBuild" % (jobitem.path, cfg),
+                ["estimatedDuration",
+                 "duration", "result",
+                 "building", "timestamp"])
             rv[cfg] = state
 
         web.header("Content-Type", "application/json")
         meta = dict()
-        meta["name"] = job.name()
-        meta["path"] = job.path
+        meta["name"] = jobitem.name()
+        meta["path"] = jobitem.path
         meta["state"] = rv
-        print str(meta)
         return json.dumps(meta)
-
-
 
 
 if __name__ == "__main__":

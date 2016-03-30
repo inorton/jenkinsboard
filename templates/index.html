@@ -1,8 +1,6 @@
-$def with (err)
+$def with (err, boardname)
 
 $var title="Builds"
-
-<div>Jenkins Build States</div>
 
 $if err:
   $ s = err
@@ -42,7 +40,6 @@ function add_build_item( paths, item ) {
     if ( item.configs.length % 2 ) {
       colsize = 4;
     }
-
     
     if ( !item.configs || item.configs.length == 1 ) {
       cfgname = false;
@@ -71,7 +68,7 @@ var jobrows = [];
 
 var busy = false;
 
-var jobs = $$.getJSON( "/selected/board1", function (data) {
+var jobs = $$.getJSON( "/selected/$boardname", function (data) {
     var paths = new Array();
     for (var job in data)
     {
@@ -84,8 +81,7 @@ var jobs = $$.getJSON( "/selected/board1", function (data) {
         row.append(xcfg);
         $$("#jobs").append(row); 
         update_build(item.path);
-      } 
-
+      }
     }
 
     // single items
@@ -107,7 +103,6 @@ var jobs = $$.getJSON( "/selected/board1", function (data) {
         update_build(item.path);
         singles++;
       }
-
     }
     $$("#jobs").append(row);
 
@@ -125,14 +120,26 @@ var jobs = $$.getJSON( "/selected/board1", function (data) {
 
   function progress_active( pbar ) {
     pbar.removeClass("progress-bar-danger");
-    pbar.addClass("progress-bar-info");
-    pbar.parent().addClass("active");
-    pbar.parent().addClass("progress-striped");
+    pbar.addClass("progress-bar-warning");
+    if (!pbar.parent().hasClass("active")) {
+      pbar.parent().addClass("active");
+      pbar.parent().addClass("progress-striped");
+    }
+  }
+
+  function progress_remain( pbar )
+  {
+    pbar.removeClass("progress-bar-danger");
+    pbar.addClass("progress-bar-warning");
+    if (!pbar.parent().hasClass("active")) {
+      pbar.parent().addClass("active");
+      pbar.parent().addClass("progress-striped");
+    }
   }
 
   function progress_done( pbar ) 
   { 
-    pbar.removeClass("progress-bar-info");
+    pbar.removeClass("progress-bar-warning");
     pbar.parent().removeClass("active");
     pbar.parent().removeClass("progress-striped");
   }
@@ -149,7 +156,6 @@ var jobs = $$.getJSON( "/selected/board1", function (data) {
     pbar.removeClass("progress-bar-success");
     pbar.addClass("progress-bar-danger");
     pbar.removeClass("progress-bar-warning");
-
   }
 
   function progress_done_warning( pbar ) {
@@ -177,7 +183,6 @@ var jobs = $$.getJSON( "/selected/board1", function (data) {
         var block = $$( "#" + make_id( "build_", [state.name, cfg]));
         var pr_done = $$( "#" + make_id( "done_", [state.name, cfg]));
         var pr_left = $$( "#" + make_id( "left_", [state.name, cfg]));
-        
 
         var completed = 100;
         if ( config.result == "SUCCESS" ) {
@@ -185,10 +190,9 @@ var jobs = $$.getJSON( "/selected/board1", function (data) {
 
         } else {
 
-          progress_done_warning( pr_left );
+          //progress_done_danger( pr_left );
           if ( config.building ) {
-            progress_active( pr_done );
-
+            progress_remain( pr_done );
             if ( config.estimatedDuration > 0 ) 
             {
               var timestamp = new Date().getTime();
