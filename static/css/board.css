@@ -34,6 +34,8 @@ a:active {text-decoration:none;}
 .build_title {
   font-size: 2.9em;
   font-weight: bold;
+  margin: 0;
+  padding: 2px;
 }
 
 .config_title {
@@ -58,4 +60,10 @@ th {
 input {
   background-color: #000000;
   border: 1px solid silver;
+}
+
+.floatleft {
+  float: left;
+  margin-left: 1em;
+  margin-right: 2em;
 }
