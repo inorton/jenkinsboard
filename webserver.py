@@ -7,6 +7,8 @@ import web
 import json
 import jenkins
 import os
+import settings
+
 
 THISDIR = os.path.dirname(os.path.abspath(__file__))
 SETTINGS_JSON = os.path.join(THISDIR, "settings.json")
@@ -16,6 +18,39 @@ GLOBALS = {}
 
 app = web.auto_application()
 render = web.template.render("templates/", base="master", globals=GLOBALS)
+
+
+class admin(app.page):
+    """
+    The admin page
+    """
+    path = "/admin"
+
+    def GET(self):
+        """
+        Render the admin page
+        :return:
+        """
+        cfg = settings.get()
+        jl = jenkins.JenkinsAPI(cfg["master"])
+        jobs = jl.get_all_jobs()
+        jobs = [ x.path for x in jobs if x.path and not x.jobs()]
+        return render.admin(cfg, jobs)
+
+    def POST(self):
+        """
+        Save settings
+        :return:
+        """
+        inputs = web.input(jobs=[])
+
+        cfg = settings.get()
+        cfg["master"] = inputs.serveraddress
+        cfg["jobs"] = inputs.jobs
+
+        settings.set(cfg)
+
+        return self.GET()
 
 
 class index(app.page):
@@ -29,49 +64,35 @@ class index(app.page):
         Render
         :return:
         """
-        boardname = SETTINGS["board"]
-        return render.index(None, boardname)
+        return render.index(None)
 
 
 class selected(app.page):
     """
     List the selected jobs
     """
-    path = "/selected/(.+)"
+    path = "/selected/"
 
-    def GET(self, boardname):
+    def GET(self):
         """
         Render
-        :param boardname:
         :return:
         """
-        jl = jenkins.JenkinsAPI(SETTINGS["master"])
-        joblist = jl.get_all_jobs()
-        web.header("Content-Type", "application/json")
-        rv = []
-        for jobitem in joblist:
-            if not jobitem:
-                continue
-            if not jobitem.name():
-                continue
-            params = jl.get_properties(jobitem.path,
-                                       ["actions[parameterDefinitions[*]]"])
 
-            if "actions" in params:
-                for pd in params["actions"]:
-                    if "parameterDefinitions" in pd:
-                        plist = pd["parameterDefinitions"]
-                        for param in plist:
-                            if "name" in param:
-                                if param["name"] == "jenkinsboard":
-                                    boards = param["description"].split(",")
-                                    if boardname in boards:
-                                        rv.append({
-                                            "name": jobitem.name(),
-                                            "configs": jobitem.configurations(),
-                                            "path": jobitem.path,
-                                            "link": SETTINGS["master"] + "/" + jobitem.path,
-                                        })
+        jl = jenkins.JenkinsAPI(settings.get()["master"])
+        jobs = settings.get()["jobs"]
+        rv = []
+        for job in jobs:
+            jobitem = jl.get_item(job)
+            assert jobitem
+            rv.append({
+                "name": jobitem.name(),
+                "configs": jobitem.configurations(),
+                "path": jobitem.path,
+                "link": SETTINGS["master"] + "/" + jobitem.path,
+            })
+
+        web.header("Content-Type", "application/json")
         return json.dumps(rv)
 
 
@@ -86,8 +107,8 @@ class jobs(app.page):
         Render
         :return:
         """
-        jl = jenkins.JenkinsAPI( SETTINGS["master"] )
-        joblist = jl.get_all_jobs()
+        cfg = settings.get()
+        joblist = cfg["jobs"]
         web.header("Content-Type", "application/json")
         rv = []
         for jobitem in joblist:

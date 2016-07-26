@@ -1,4 +1,4 @@
-$def with (err, boardname)
+$def with (err)
 
 $var title="Builds"
 
@@ -9,6 +9,9 @@ $if err:
 <div class="container-fluid" id="jobs" style="color:white">
 </div>
 
+<div class="admin" style="position: absolute; top: 0px; right: 1em;">
+  <a href="/admin"><h4>[configure]</h4></a>
+</div>
 
 <script type="text/javascript">
 
@@ -68,7 +71,7 @@ var jobrows = [];
 
 var busy = false;
 
-var jobs = $$.getJSON( "/selected/$boardname", function (data) {
+var jobs = $$.getJSON( "/selected/", function (data) {
     var paths = new Array();
     for (var job in data)
     {

@@ -1,0 +1,26 @@
+$def with (settings, jobs)
+
+$var title="Admin"
+
+<h2>Jenkinsboard Settings</h2>
+
+<form method="POST">
+    <table>
+        <tr>
+            <th>
+                Jenkins Server Address
+            </th>
+            <td>
+                <input size="40" type="text" name="serveraddress" value="$settings['master']"/>
+            </td>
+        </tr>
+    </table>
+    <input type="submit" value="Save"/>
+    <h3>
+        Select Jobs to display
+    </h3>
+
+    $for job in jobs:
+        <br/><input type="checkbox" name="jobs" value="$job"> $job</input>
+
+</form>
