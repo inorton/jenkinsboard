@@ -119,7 +119,7 @@ class jobs(app.page):
                 "name": jobitem.name(),
                 "path": jobitem.path,
                 "configs": jobitem.configurations(),
-                "link": SETTINGS["master"] + "/" + jobitem.path,
+                "link": cfg["master"] + "/" + jobitem.path,
                 })
 
         return json.dumps(rv)
@@ -137,9 +137,10 @@ class job(app.page):
         :param jobpath:
         :return:
         """
-        jl = jenkins.JenkinsAPI(SETTINGS["master"])
+        master = settings.get()["master"]
+        jl = jenkins.JenkinsAPI(master)
         jobitem = jl.get_item(jobpath)
-        jobitem.url = "%s/%s" % (SETTINGS["master"], jobpath)
+        jobitem.url = "%s/%s" % (master, jobpath)
         web.header("Content-Type", "application/json")
         return json.dumps(jobitem.data)
 
