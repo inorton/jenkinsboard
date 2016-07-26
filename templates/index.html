@@ -202,6 +202,9 @@ var jobs = $$.getJSON( "/selected/", function (data) {
               var duration = timestamp - config.timestamp;
               var frac = duration / config.estimatedDuration;
               completed = 100 * frac;
+              if ( completed > 100 ) {
+                completed = 99;
+              }
             }
           } else {
             progress_done_danger( pr_done );
@@ -210,8 +213,6 @@ var jobs = $$.getJSON( "/selected/", function (data) {
 
         pr_done.width( completed + "%" );
         pr_left.width( (100 - completed) + "%" );
-
-
 
       }
 
