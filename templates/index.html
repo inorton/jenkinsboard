@@ -101,7 +101,7 @@ var jobs = $$.getJSON( "/selected/", function (data) {
       
       if ( item.configs.length == 1 ) {
         var x = add_build_item( paths, item );
-        x.addClass("col-md-4");
+        x.addClass("floatleft");
         row.append(x);
         update_build(item.path);
         singles++;
