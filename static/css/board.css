@@ -23,7 +23,8 @@ a:active {text-decoration:none;}
 
 .progress {
   min-width: 4in;
-  height: 0.2in;
+  height: 0.3in;
+  margin-bottom: 3px;
 }
 
 .xoverflow {
@@ -36,7 +37,15 @@ a:active {text-decoration:none;}
 }
 
 .config_title {
-  font-size: 1.2em;
+  font-size: 0.9em;
+  float: left;
+  width: 2in;
+}
+
+.build_item {
+  margin: 1px;
+  padding: 1px;
+  padding-left: 4px;
 }
 
 td {
