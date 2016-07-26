@@ -39,3 +39,14 @@ a:active {text-decoration:none;}
   font-size: 1.2em;
 }
 
+td {
+  padding: 1em;
+}
+th {
+  padding: 1em;
+}
+
+input {
+  background-color: #000000;
+  border: 1px solid silver;
+}
