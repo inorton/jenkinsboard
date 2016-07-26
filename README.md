@@ -7,10 +7,7 @@ An auto-layout build feedback board for Jenkins
 3. Start webserver.py (under a screen session?) Optionally adding a port number on the command line.
 
 # Adding jobs to the view
-1. Create a string parameter named "jenkinsboard" and set the _description_ to a value eg, "myproject"
-2. Fire up a web browser and point it at the machine running webserver.py and go to http://WEBSERVER/myproject
-
-# Multiple Boards
-You can now have a job appear on several boards. The "jenkinsboard" parameter is
-now taken as a comma separated list so you can have multiple boards and have jobs
-appear on more than one of them.
+1. Go to the "/admin" page
+2. Put the URL to your jenkins master into the address box
+3. Save
+4. Select your jobs and hit Save again
