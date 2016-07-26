@@ -17,12 +17,16 @@ def get():
     Get the configs from disk (if needed)
     :return:
     """
-    global cfg
-    with cfglock:
-        if not cfg:
-            with open(cfgfile, "rb") as cfgfh:
-                cfg = json.load(cfgfh)
-    return dict(cfg)
+    try:
+        global cfg
+        with cfglock:
+            if not cfg:
+                with open(cfgfile, "rb") as cfgfh:
+                    cfg = json.load(cfgfh)
+        return dict(cfg)
+    except IOError:
+        return {"master": "http://localhost:8080",
+                "jobs": []}
 
 
 def set(cfgdata):

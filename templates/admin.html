@@ -1,4 +1,4 @@
-$def with (settings, jobs)
+$def with (settings, selected_jobs, jobs)
 
 $var title="Admin"
 
@@ -16,11 +16,20 @@ $var title="Admin"
         </tr>
     </table>
     <input type="submit" value="Save"/>
-    <h3>
-        Select Jobs to display
-    </h3>
+
+    $if selected_jobs:
+        <h3>Selected Jobs</h3>
+
+    $for job in selected_jobs:
+        <br/>
+        <input type="checkbox" name="jobs" value="$job" checked="checked"> $job</input>
+
+
+    $if jobs:
+        <h3>Select Jobs to Display</h3>
 
     $for job in jobs:
-        <br/><input type="checkbox" name="jobs" value="$job"> $job</input>
+        <br/>
+        <input type="checkbox" name="jobs" value="$job"> $job</input>
 
 </form>
