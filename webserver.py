@@ -10,10 +10,6 @@ import os
 import settings
 
 
-THISDIR = os.path.dirname(os.path.abspath(__file__))
-SETTINGS_JSON = os.path.join(THISDIR, "settings.json")
-SETTINGS = json.load(open(SETTINGS_JSON, "rb"))
-
 GLOBALS = {}
 
 app = web.auto_application()
@@ -32,10 +28,17 @@ class admin(app.page):
         :return:
         """
         cfg = settings.get()
-        jl = jenkins.JenkinsAPI(cfg["master"])
-        jobs = jl.get_all_jobs()
-        jobs = [ x.path for x in jobs if x.path and not x.jobs()]
-        return render.admin(cfg, jobs)
+        jobslist = []
+        try:
+            jl = jenkins.JenkinsAPI(cfg["master"])
+            jobslist = jl.get_all_jobs()
+            jobslist = [x.path for x in jobslist if x.path and not x.jobs()]
+        except ValueError:
+            pass
+        selected = set(cfg["jobs"])
+        unselected = [x for x in jobslist if x not in cfg["jobs"]]
+
+        return render.admin(cfg, selected, unselected)
 
     def POST(self):
         """
@@ -89,7 +92,7 @@ class selected(app.page):
                 "name": jobitem.name(),
                 "configs": jobitem.configurations(),
                 "path": jobitem.path,
-                "link": SETTINGS["master"] + "/" + jobitem.path,
+                "link": settings.get()["master"] + "/" + jobitem.path,
             })
 
         web.header("Content-Type", "application/json")
@@ -153,7 +156,7 @@ class status(app.page):
         :param jobpath:
         :return:
         """
-        jl = jenkins.JenkinsAPI(SETTINGS["master"])
+        jl = jenkins.JenkinsAPI(settings.get()["master"])
         jobitem = jl.get_item(jobpath)
         rv = dict()
         for cfg in jobitem.configurations():
