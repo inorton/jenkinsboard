@@ -1,6 +1,8 @@
 # JenkinsBoard
 An auto-layout build feedback board for Jenkins
 
+![Screenshot of Builds](screenshot.jpg)
+
 # Instructions
 1. Clone the git repo
 2. Edit settings.json to set your jenkins master with the FQDN of your jenkins server.
