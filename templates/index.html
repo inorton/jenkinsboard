@@ -34,12 +34,23 @@ function make_id( prefix, parts ){
 
 function add_build_item( paths, item ) {
   var cfgitems = new Array();
+
+  if ( item.configs.length == 0 ){
+    item.configs.push("x");
+  }
+
   for (var cfg in item.configs) {
 
     var cfgdata = new Array();
-    var cfgvalues=item.configs[cfg].split("=");
-    var cfgname=cfgvalues[1];
+    var cfgvalues = [];
+    var cfgname = "-";
     var colsize = 6;
+
+    if (item.configs[cfg].indexOf("=")){
+      cfgvalues=item.configs[cfg].split("=");
+      cfgname=cfgvalues[1];
+    }
+
     if ( item.configs.length % 2 ) {
       colsize = 4;
     }
@@ -99,7 +110,7 @@ var jobs = $$.getJSON( "/selected/", function (data) {
       }
       var item = data[job];
       
-      if ( item.configs.length == 1 ) {
+      if ( item.configs.length < 2 ) {
         var x = add_build_item( paths, item );
         x.addClass("floatleft");
         row.append(x);
@@ -180,6 +191,12 @@ var jobs = $$.getJSON( "/selected/", function (data) {
     $$.getJSON("/status/" + itempath, function (state) {
       build_update_count--;
       var jname = state.name;
+      if ( state.state.hasOwnProperty("result") ){
+        var tmp = state.state;
+        state.state = {}
+        state.state["x"] = tmp
+      }
+
       for ( var cfg in state.state ) {
         var config = state.state[cfg];
 
