@@ -160,13 +160,27 @@ class status(app.page):
         jl = jenkins.JenkinsAPI(settings.get()["master"])
         jobitem = jl.get_item(jobpath)
         rv = dict()
-        for cfg in jobitem.configurations():
+
+        configs = jobitem.configurations()
+        if len(configs):
+            for cfg in configs:
+                state = jl.get_properties(
+                    "%s/%s/lastBuild" % (jobitem.path, cfg),
+                    ["estimatedDuration",
+                     "duration",
+                     "result",
+                     "building",
+                     "timestamp"])
+                rv[cfg] = state
+        else:
             state = jl.get_properties(
-                "%s/%s/lastBuild" % (jobitem.path, cfg),
-                ["estimatedDuration",
-                 "duration", "result",
-                 "building", "timestamp"])
-            rv[cfg] = state
+                    "%s/lastBuild" % (jobitem.path),
+                    ["estimatedDuration",
+                     "duration",
+                     "result",
+                     "building",
+                     "timestamp"])
+            rv = state
 
         web.header("Content-Type", "application/json")
         meta = dict()
