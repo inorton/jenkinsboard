@@ -56,15 +56,20 @@ class JenkinsAPI:
 
     def get_item(self, address):
         page = "%s/%s/%s" % (self.server, address, self.apisuffix)
-        resp = urllib2.urlopen(page)
+        try:
+            resp = urllib2.urlopen(page)
 
-        s = resp.read()
-        jobitem = json.loads(s)
+            s = resp.read()
+            jobitem = json.loads(s)
 
-        item = JenkinsItem(address, jobitem)
-        item.url = "%s/%s" % (self.server, address)
+            item = JenkinsItem(address, jobitem)
+            item.url = "%s/%s" % (self.server, address)
 
-        return item
+            return item
+        except urllib2.HTTPError as err:
+            print "error fetching from {}: {}".format(page, str(err))
+            return None
+
 
     def get_properties(self, path, proplist=[]):
         data = dict()

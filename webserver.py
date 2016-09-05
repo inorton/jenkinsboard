@@ -35,10 +35,11 @@ class admin(app.page):
             jobslist = [x.path for x in jobslist if x.path and not x.jobs()]
         except ValueError:
             pass
-        selected = set(cfg["jobs"])
-        unselected = [x for x in jobslist if x not in cfg["jobs"]]
 
-        return render.admin(cfg, selected, unselected)
+        chosen = [x for x in set(cfg["jobs"]) if x in jobslist]
+        remaining = [x for x in jobslist if x not in cfg["jobs"]]
+
+        return render.admin(cfg, chosen, remaining)
 
     def POST(self):
         """
@@ -87,13 +88,13 @@ class selected(app.page):
         rv = []
         for job in jobs:
             jobitem = jl.get_item(job)
-            assert jobitem
-            rv.append({
-                "name": jobitem.name(),
-                "configs": jobitem.configurations(),
-                "path": jobitem.path,
-                "link": settings.get()["master"] + "/" + jobitem.path,
-            })
+            if jobitem:
+                rv.append({
+                    "name": jobitem.name(),
+                    "configs": jobitem.configurations(),
+                    "path": jobitem.path,
+                    "link": settings.get()["master"] + "/" + jobitem.path,
+                })
 
         web.header("Content-Type", "application/json")
         return json.dumps(rv)
