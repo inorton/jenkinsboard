@@ -1,4 +1,5 @@
 import urllib2
+import urllib
 import json
 
 
@@ -9,7 +10,7 @@ class JenkinsItem:
         self.link = None
 
     def __str__(self):
-        return "%s : %s" % ( self.path, self.name() )
+        return "%s : %s" % ( self.path, urllib.quote(self.name()) )
 
     def name(self):
         if "name" in self.data:
@@ -92,7 +93,7 @@ class JenkinsAPI:
             start = self.get_item("")
         rv.append(start)
         for childname in start.jobs():
-            childpath = "%s/job/%s" % (start.path, childname)
+            childpath = "%s/job/%s" % (start.path, urllib.quote(childname))
             child = self.get_item(childpath)
             children = self.get_all_jobs(child)
             if children:
