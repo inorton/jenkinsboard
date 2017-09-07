@@ -1,1 +1,1 @@
-{"master": "https://nshield-ci.ssdis.loc:9443", "jobs": ["/job/ConnectXC/job/CXC-custom-4-hostside", "/job/ConnectXC/job/CXC-2-fslinux", "/job/ConnectXC/job/CXC-1-software"]}
+{"jobs": ["/job/nShield-Master/job/01-Firmware", "/job/nShield-Master/job/01-FirmwareModuleTest", "/job/nShield-Master/job/01-Software", "/job/nShield-Master/job/02-Installers", "/job/nShield-Master/job/02-SmokeTest", "/job/nShield-Master/job/03-ISOs", "/job/nShield-Master/job/03-RegressionTest"], "master": "https://nshield-ci.ssdis.loc:9443"}

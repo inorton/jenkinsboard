@@ -1,6 +1,18 @@
 import urllib2
 import urllib
 import json
+import requests
+
+
+def http_get(url):
+    """
+    Get a web page
+    :param url:
+    :return:
+    """
+    resp = requests.get(url, allow_redirects=False, verify=False)
+
+    return resp.content
 
 
 class JenkinsItem:
@@ -58,9 +70,8 @@ class JenkinsAPI:
     def get_item(self, address):
         page = "%s/%s/%s" % (self.server, address, self.apisuffix)
         try:
-            resp = urllib2.urlopen(page)
 
-            s = resp.read()
+            s = http_get(page)
             jobitem = json.loads(s)
 
             item = JenkinsItem(address, jobitem)
@@ -78,9 +89,9 @@ class JenkinsAPI:
         page = "%s/%s/%s?tree=%s" \
             % (self.server, path, self.apisuffix, ",".join(proplist))
         try:
-            resp = urllib2.urlopen(page)
 
-            s = resp.read()
+            s = http_get(page)
+
             data = json.loads(s)
         except urllib2.HTTPError:
             pass
